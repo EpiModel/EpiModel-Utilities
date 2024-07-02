@@ -41,6 +41,14 @@ netdyn2el_cuml <- function(net) {
 #' \href{https://progressr.futureverse.org/articles/progressr-intro.html}{progressr package}
 #' for more information and customization.
 #'
+#' @section Number of Nodes:
+#' This codes does not know the total number of node on the network and assumes
+#' that the highest ID recorded correspond to the last node.
+#' We can therefore arrive to a situation where there is less rows in the output
+#' than node in the network if the last N nodes (by ID) are never connected.
+#' And therefore are not recorded in the cumulative edgelist.
+#' So the FRP for the nodes not present in the output is always 1 (themselves).
+#'
 #' @export
 #'
 #' @examples
