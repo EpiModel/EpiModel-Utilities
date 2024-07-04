@@ -5,6 +5,40 @@ netdyn2el_cuml <- function(net) {
     dplyr::mutate(stop = stop - 1)
 }
 
+# dedplicate a cumulative edgelist by combining overllapping edges into one
+# with the full duration of the overllapping ones
+dedup_el_cuml <- function(el_all) {
+  ea <- el_all |>
+    dplyr::group_by(head, tail) |>
+    dplyr::mutate(n = n())
+
+  e_unique <- ea |>
+    dplyr::filter(n == 1) |>
+    dplyr::select(-n)
+
+  e_dup <- ea |>
+    dplyr::filter(n > 1) |>
+    dplyr::select(-n)
+
+  e_dup <- e_dup |>
+    dplyr::arrange(head, tail, start, stop) |>
+    dplyr::group_by(head, tail)
+
+  e_dedup <- e_dup |>
+    dplyr::mutate(
+      lstart= dplyr::lag(start),
+      lstop = dplyr::lag(stop),
+      overlap = !is.na(lstop) & !is.na(lstart) & start <= lstop,
+      stop = ifelse(overlap, max(stop, lstop, na.rm = TRUE), stop),
+      start = ifelse(overlap, min(start, lstart, na.rm = TRUE), start)
+      ) |>
+    dplyr::select(-c(lstart, lstop, overlap)) |>
+    dplyr::ungroup() |>
+    unique()
+
+  dplyr::bind_rows(e_unique, e_dedup)
+}
+
 #' @title Calculate the Forward Reachable Path over a Time Series
 #'
 #' @description This function calculates the Forward Reachable Path (FRP) of all
